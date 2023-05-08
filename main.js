@@ -37,15 +37,29 @@ class Carrito {
         this.categorias = [];
     }
 }
-//funcion para agregar producto al carrito
-function crearCarrito (sku, cantidad){
-    const carrito1 = new Carrito();
-    const prodParaComprar1 = new ProductoParaComprar(ProductoParaVender.sku, ProductoParaVender.nombre, cantidad);
-        this.productos.push(prodParaComprar1);
-        this.precioTotal= this.precioTotal + (ProductoParaVender.precio * cantidad);
-        this.categorias.push
+function buscarProducto (sku){
+    const productoEncontrado = productosDelSuper.find(producto => producto.sku === sku);
+    if (productoEncontrado){
+        console.log(productoEncontrado);
+    }else {
+        console.log("producto no encontrado");
+    }
 }
-crearCarrito('PV332MJ', 1)
+
+function agregarProducto (sku, cantidad){
+    //ejecuto la funcion de buscar en la base de datos
+    const productoAAgregar = buscarProducto(sku);
+    console.log(`Producto encontrado: ${productoAAgregar}`);
+
+    //si el producto existe hay que crear el producto a comprar para agregarlo al carrito
+    const productoNuevoEnCarrito = new ProductoParaComprar(sku, productoAAgregar.nombre, cantidad);
+
+}
+
+
+
+
+
 //molde para el producto en carrito
 class ProductoParaComprar {
     constructor(sku, nombre, cantidad) {

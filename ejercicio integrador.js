@@ -27,11 +27,12 @@ Ejercicios
 
 // Cada producto que vende el super es creado con esta clase
 class Producto {
-    sku;            // Identificador único del producto
-    nombre;         // Su nombre
-    categoria;      // Categoría a la que pertenece este producto
-    precio;         // Su precio
-    stock;          // Cantidad disponible en stock
+    //Dejamos comentado lo que no usamos
+    // sku;            // Identificador único del producto
+    // nombre;         // Su nombre
+    // categoria;      // Categoría a la que pertenece este producto
+    // precio;         // Su precio
+    // stock;          // Cantidad disponible en stock
 
     constructor(sku, nombre, precio, categoria, stock) {
         this.sku = sku;
@@ -59,11 +60,9 @@ const fideos = new Producto('UI999TY', 'Fideos', 5, 'alimentos');
 const lavandina = new Producto('RT324GD', 'Lavandina', 9, 'limpieza');
 const shampoo = new Producto('OL883YE', 'Shampoo', 3, 'higiene', 50);
 const jabon = new Producto('WE328NJ', 'Jabon', 4, 'higiene', 3);
-console.log(lavandina);
+
 // Genero un listado de productos. Simulando base de datos
 const productosDelSuper = [queso, gaseosa, cerveza, arroz, fideos, lavandina, shampoo, jabon];
-
-
 
 
 
@@ -72,45 +71,102 @@ class Carrito {
     productos;      // Lista de productos agregados
     categorias;     // Lista de las diferentes categorías de los productos en el carrito
     precioTotal;    // Lo que voy a pagar al finalizar mi compra
-
-    // Al crear un carrito, empieza vació
+    // Al crear un carrito, empieza vacio
     constructor() {
         this.precioTotal = 0;
         this.productos = [];
-        this.categorias = [];
+        this.categorias =[]; 
     }
-
-    /**
+    
+   
+    //Valido si el sku ya fue cargado al carrito y actualizo la cantidad 
+    validarProducto(sku, cantidad){
+        for(let i = 0; i<this.productos.length;i++){
+            if(this.productos[i].sku === sku){
+                this.productos[i].cantidad = this.productos[i].cantidad +  cantidad;
+                return true;
+            }
+        }
+    }
+    
+     /**
      * función que agrega @{cantidad} de productos con @{sku} al carrito
      */
-    async agregarProducto(sku, cantidad) {
+
+    //async agregarProducto(sku, cantidad) {
+    agregarProducto(sku, cantidad) {
+    
         console.log(`Agregando ${cantidad} ${sku}`);
-
-
-        // Busco el producto en la "base de datos"
-        const producto = await findProductBySku(sku);
-
-        console.log("Producto encontrado", producto);
-
-        // Creo un producto nuevo
-        const nuevoProducto = new ProductoEnCarrito(sku, producto.nombre, cantidad);
-                this.productos.push(nuevoProducto);
-                this.precioTotal = this.precioTotal + (producto.precio * cantidad);
+    
+    // Busco el producto en la "base de datos     
+    //const producto = await findProductBySku(sku);
+    const promesaEncontrarProducto =  findProductBySku(sku);
+    promesaEncontrarProducto
+        .then((producto) =>{
+            console.log("Producto encontrado", producto);
+    
+            //Creo un producto nuevo en caso de que no este agragado, caso contrario solo se actualiza la cantidad
+            
+        if(!this.validarProducto(sku, cantidad)){
+            const nuevoProducto = new ProductoEnCarrito(sku, producto.nombre, cantidad)
+            this.productos.push(nuevoProducto);
+            this.precioTotal = this.precioTotal + (producto.precio * cantidad);
+            this.cantidad = this.cantidad + cantidad
+            if(!this.categorias.includes(producto.categoria)){
                 this.categorias.push(producto.categoria);
+            }
+                
+        } else{
+            console.log(`El producto ${sku} ya fue cargado`)
+                
+        }
+            //muestro los productos en el carrito
+        for(let i =0; i<this.productos.length;i++){
+            console.log(`Producto: ${this.productos[i].nombre} Cantidad: ${this.productos[i].cantidad}`)
+        }   
+      }).catch((producto)=>{
+            console.log(producto)
+        });
     }
+
+    eliminarProducto (sku, cantidad){
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                let resultado;
+                for(let i = 0; i<this.productos.length;i++){
+                    if(this.productos[i].sku === sku && cantidad < this.productos[i].cantidad){
+                        resultado = `Cantidad Actualizada de ${sku} es: ${ this.productos[i].cantidad - cantidad}`;
+                    }else if (this.productos[i].sku === sku && cantidad >= this.productos[i].cantidad){
+                        resultado =this.productos.splice(i, 1);
+                        console.log("Productos actuales en carrito")
+                        console.log(this.productos);
+                        console.log("Producto eliminado:")
+                        
+                    }
+                }
+                if (resultado){
+                    resolve (resultado)
+                }else{
+                    reject("Producto no encontrado")
+                }
+            }, 0);
+        })
+    }
+   
 }
+
 // Cada producto que se agrega al carrito es creado con esta clase
 class ProductoEnCarrito {
-    sku ;       // Identificador único del producto
+    sku;       // Identificador único del producto
     nombre;    // Su nombre
     cantidad;  // Cantidad de este producto en el carrito
-
     constructor(sku, nombre, cantidad) {
         this.sku = sku;
         this.nombre = nombre;
-        this.cantidad = cantidad;  
-        }
-    
+        this.cantidad = cantidad;
+        
+    }
+
 }
 
 // Función que busca un producto por su sku en "la base de datos"
@@ -128,10 +184,26 @@ function findProductBySku(sku) {
 }
 
 const carrito = new Carrito();
-carrito.agregarProducto('WE328NJ', 2);
+carrito.agregarProducto('WE328NJ',4);
+carrito.agregarProducto('XX92LKI',3);
+carrito.agregarProducto('OL883YE',2);
+carrito.agregarProducto('WE328N',2);// este no existe en BD
+carrito.agregarProducto('PV332MJ',1);
+carrito.agregarProducto('OL883YE',1);//producto ya cargado en el carrito
+carrito.agregarProducto('FN312PPE',3);
 
-// carrito.agregarProducto('WE328NJ', 2);
-console.log(carrito);
-
+//Probamos para eliminar producto, actualizar cantidad y/ informar que el producto no existe
+const resultadoPromesaEliminarProducto = carrito.eliminarProducto('FN312PPE',1);
+resultadoPromesaEliminarProducto
+    .then((resultado)=>{
+        console.log(resultado)
+  }).catch((resultado)=>{
+    console.log(resultado)
+}).finally(()=>{
+    console.log("Compra finalizada con exito!!")
+})
+// Trabajo realizado por los alumnos: 
+//María Luján Navarra Morero
+//Leandro Hernán Ibarra
 
 
